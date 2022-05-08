@@ -16,7 +16,7 @@ kotlin {
             kotlinOptions.jvmTarget = "11"
         }
     }
-    js(IR) {
+    /* js(IR) {
         browser {
             testTask {
                 testLogging.showStandardStreams = true
@@ -27,12 +27,17 @@ kotlin {
             }
         }
         binaries.executable()
-    }
+    } */
 
     sourceSets {
         val commonMain by getting {
             dependencies {
                 api(compose.runtime)
+
+                // TODO: Move to nonJsMain
+                @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+                api(compose.material3)
+                api(compose.foundation)
             }
         }
         val commonTest by getting {
@@ -70,7 +75,7 @@ kotlin {
         }
         val desktopTest by getting
 
-        val jsMain by getting {
+        /* val jsMain by getting {
             dependencies {
                 api(compose.web.core)
             }
@@ -79,7 +84,7 @@ kotlin {
             dependencies {
                 implementation(kotlin("test-js"))
             }
-        }
+        } */
     }
 }
 

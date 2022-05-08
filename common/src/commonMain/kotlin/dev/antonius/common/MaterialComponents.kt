@@ -2,6 +2,7 @@ package dev.antonius.common
 
 import androidx.compose.runtime.Composable
 
+// TODO: Move to nonJsMain
 @Composable
 actual fun Button(
     onClick: () -> Unit,

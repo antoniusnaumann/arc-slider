@@ -15,6 +15,8 @@ fun App() {
     }) {
         Text(text)
     }
+
+    ArcSlider()
 }
 
 @Composable
@@ -22,3 +24,6 @@ expect fun Button(onClick: () -> Unit, content: @Composable () -> Unit)
 
 @Composable
 expect fun Text(text: String)
+
+@Composable
+expect fun ArcSlider()

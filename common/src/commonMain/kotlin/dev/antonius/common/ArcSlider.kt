@@ -9,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -50,8 +51,8 @@ fun ArcSlider(
 fun ArcSlider(
     style: Stroke,
     modifier: Modifier = Modifier) {
-    val size by remember { mutableStateOf(SizeContainer(Size.Zero)) }
-    val progress = .8f
+    var size by remember { mutableStateOf(Size.Zero) }
+    var progress by remember { mutableStateOf(0.1f) }
     val sweepAngle = 270f
 
     Box(modifier, contentAlignment = Alignment.Center) {
@@ -60,76 +61,57 @@ fun ArcSlider(
                 .aspectRatio(1f)
                 .fillMaxWidth()
                 .padding(16.dp)
-                .onSizeChanged { size.size = it.toSize() },
+                .onSizeChanged { size = it.toSize() },
             sweepAngle,
             style = style
         )
 
-        ArcHandle(progress, size, sweepAngle)
+        ArcHandle(progress, size, sweepAngle) { progress = it }
+
+        Text("${progress}")
     }
 }
 
 @Composable
-private fun ArcHandle(progress: Float, size: SizeContainer, sweepAngle: Float) {
+private fun ArcHandle(progress: Float, size: Size, sweepAngle: Float, onProgressChange: (Float) -> Unit) {
     val radius = 12.dp
 
-    var offsetX by remember { mutableStateOf(0f) }
-    var offsetY by remember { mutableStateOf(0f) }
+    val angle = degToRad(90 + (360 - sweepAngle) / 2 + progress * sweepAngle)
+    val circleRadius = size.width / 2
 
-    size.observe { old, new ->
-        if (old.width == 0f || old.height == 0f) return@observe
+    val x = circleRadius * cos(angle)
+    val y = circleRadius * sin(angle)
 
-        offsetX *= new.width / old.width
-        offsetY *= new.height / old.height
+    // TODO: Bug: Handle stops instantly because changing progress alters update which triggers a recomposition of pointerInput
+    val update = { (unprocessedX, unprocessedY): Offset ->
+        val rawX = x + unprocessedX
+        val rawY = y + unprocessedY
+
+        val lower = (+(360 - sweepAngle) / 2).normalizedDegrees()
+        val upper = (-(360 - sweepAngle) / 2).normalizedDegrees()
+
+        val rawTheta = (radToDeg(atan2(rawY, rawX))).normalizedDegrees()
+        val theta = min(max(rawTheta, lower), upper)
+
+        onProgressChange((theta.normalizedDegrees() - 90 - (360 - sweepAngle) / 2 ) / sweepAngle)
     }
 
     Box(Modifier
-        .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
+        .offset { IntOffset(x.roundToInt(), y.roundToInt()) }
         .size(radius * 2)
         .background(MaterialTheme.colorScheme.primary, CircleShape)
-        .pointerInput(Unit) {
+        .pointerInput(update) {
             detectDragGestures { change, dragAmount ->
                 change.consumeAllChanges()
-                val rawX = offsetX + dragAmount.x
-                val rawY = offsetY + dragAmount.y
 
-                val upper = (+(360 - sweepAngle) / 2).deg
-                val lower = (-(360 - sweepAngle) / 2).deg
-
-                val rawTheta = atan2(rawY, rawX) - 90.deg
-                val theta = (if (rawTheta < 0) min(rawTheta, lower) else max(rawTheta, upper)) + 90.deg
-
-                val circleRadius = size.width / 2
-
-                offsetX = circleRadius * cos(theta)
-                offsetY = circleRadius * sin(theta)
+                update(dragAmount)
             }
         })
 }
 
 private fun radToDeg(rad: Float) = rad * 180 / PI.toFloat()
 private fun degToRad(deg: Float) = (deg * PI / 180f).toFloat()
-/** Converts a degree to a radian angle */
-private val Float.deg get() = degToRad(this)
-private val Int.deg get() = degToRad(this.toFloat())
-
-private class SizeContainer(size: Size) {
-    var size: Size = size
-        get() = field
-        set(value) {
-            observer(field, value)
-            field = value
-        }
-
-    val height get() = size.height
-    val width get() = size.width
-
-    private var observer: (old: Size, new: Size) -> Unit = { _, _ ->  }
-
-    fun observe(observer: (old: Size, new: Size) -> Unit) {
-        this.observer = observer
-    }
-}
+private fun Float.normalizedDegrees() = this.mod(360f)
 
 /**
  * @param progress Relative progress to display. Should be between 0 and 1.
@@ -143,7 +125,7 @@ internal fun Arc(
     backgroundColor: Color = MaterialTheme.colorScheme.primaryContainer,
     style: Stroke = Stroke(width = with(LocalDensity.current) { 8.dp.toPx() }, cap = StrokeCap.Round),
 ) {
-    check(progress in 0f..1f) { "Progress should be between 0 and 1" }
+    check(progress in 0f..1f) { "Progress should be between 0 and 1. Progress was $progress" }
 
     Canvas(modifier) {
         drawArc(

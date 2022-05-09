@@ -130,15 +130,15 @@ internal fun Arc(
     Canvas(modifier) {
         drawArc(
             color = backgroundColor,
-            startAngle = 135f,
+            startAngle = 90f + (360 - sweepAngle) / 2,
             sweepAngle = sweepAngle,
             useCenter = false,
             style = style
         )
         drawArc(
             color = color,
-            startAngle = 135f,
-            sweepAngle = 270f * progress,
+            startAngle = 90f + (360 - sweepAngle) / 2,
+            sweepAngle = sweepAngle * progress,
             useCenter = false,
             style = style
         )

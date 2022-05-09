@@ -56,6 +56,8 @@ fun ArcSlider(
     val sweepAngle = 270f
 
     Box(modifier, contentAlignment = Alignment.Center) {
+        Text(progress.toString())
+
         Arc(progress,
             Modifier
                 .aspectRatio(1f)
@@ -66,47 +68,50 @@ fun ArcSlider(
             style = style
         )
 
-        ArcHandle(progress, size, sweepAngle) { progress = it }
-
-        Text("${progress}")
+        ArcHandle(progress, size, sweepAngle) { progress = calculateProgress(it, sweepAngle, size, progress) }
     }
 }
 
 @Composable
-private fun ArcHandle(progress: Float, size: Size, sweepAngle: Float, onProgressChange: (Float) -> Unit) {
+private fun ArcHandle(progress: Float, size: Size, sweepAngle: Float, onDrag: (Offset) -> Unit) {
     val radius = 12.dp
 
+    val angle = degToRad(90 + (360 - sweepAngle) / 2 + progress * sweepAngle)
+
+    val circleRadius = size.width / 2
+
+    val x = circleRadius * cos(angle)
+    val y = circleRadius * sin(angle)
+
+    Box(Modifier
+        .offset { IntOffset(x.roundToInt(), y.roundToInt()) }
+        .size(radius * 2)
+        .background(MaterialTheme.colorScheme.primary, CircleShape)
+        .pointerInput(size) {
+            detectDragGestures { change, dragAmount ->
+                change.consumeAllChanges()
+
+                onDrag(dragAmount)
+            }
+        })
+}
+
+private fun calculateProgress(drag: Offset, sweepAngle: Float, size: Size, progress: Float): Float {
     val angle = degToRad(90 + (360 - sweepAngle) / 2 + progress * sweepAngle)
     val circleRadius = size.width / 2
 
     val x = circleRadius * cos(angle)
     val y = circleRadius * sin(angle)
 
-    // TODO: Bug: Handle stops instantly because changing progress alters update which triggers a recomposition of pointerInput
-    val update = { (unprocessedX, unprocessedY): Offset ->
-        val rawX = x + unprocessedX
-        val rawY = y + unprocessedY
+    val rawX = x + drag.x
+    val rawY = y + drag.y
 
-        val lower = (+(360 - sweepAngle) / 2).normalizedDegrees()
-        val upper = (-(360 - sweepAngle) / 2).normalizedDegrees()
+    val theta = (radToDeg(atan2(rawY, rawX))).normalizedDegrees()
 
-        val rawTheta = (radToDeg(atan2(rawY, rawX))).normalizedDegrees()
-        val theta = min(max(rawTheta, lower), upper)
+    val rawProgress = (theta - 90 - (360 - sweepAngle) / 2 ).normalizedDegrees() / sweepAngle
 
-        onProgressChange((theta.normalizedDegrees() - 90 - (360 - sweepAngle) / 2 ) / sweepAngle)
-    }
-
-    Box(Modifier
-        .offset { IntOffset(x.roundToInt(), y.roundToInt()) }
-        .size(radius * 2)
-        .background(MaterialTheme.colorScheme.primary, CircleShape)
-        .pointerInput(update) {
-            detectDragGestures { change, dragAmount ->
-                change.consumeAllChanges()
-
-                update(dragAmount)
-            }
-        })
+    // The first is a hack to estimate if the progress did underflow
+    return if (rawProgress > 1.1f) 0f else if (rawProgress > 1f) 1f else rawProgress
 }
 
 private fun radToDeg(rad: Float) = rad * 180 / PI.toFloat()
@@ -125,7 +130,7 @@ internal fun Arc(
     backgroundColor: Color = MaterialTheme.colorScheme.primaryContainer,
     style: Stroke = Stroke(width = with(LocalDensity.current) { 8.dp.toPx() }, cap = StrokeCap.Round),
 ) {
-    check(progress in 0f..1f) { "Progress should be between 0 and 1. Progress was $progress" }
+    // check(progress in 0f..1f) { "Progress should be between 0 and 1. Progress was $progress" }
 
     Canvas(modifier) {
         drawArc(

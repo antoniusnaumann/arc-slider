@@ -24,14 +24,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import kotlin.math.*
 
-// TODO: Move to nonJsMain
-
 @Composable
 actual fun ArcSlider(
     progress: Float,
     onProgressChange: (Float) -> Unit,
     sweepAngle: Float
-) = ArcSlider(progress, onProgressChange, Modifier)
+) { ArcSlider(progress, onProgressChange, Modifier) }
 
 /**
  * A circular slider that can be used to select a value between 0f and 1f.

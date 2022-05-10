@@ -1,5 +1,5 @@
-group "dev.antonius"
-version "1.0-SNAPSHOT"
+group = "dev.antonius.arc"
+version = "1.0-SNAPSHOT"
 
 allprojects {
     repositories {

@@ -27,37 +27,42 @@ import kotlin.math.*
 // TODO: Move to nonJsMain
 
 @Composable
-actual fun ArcSlider() {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-        ArcSlider(
-            Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            8.dp
-        )
-    }
-}
+actual fun ArcSlider(
+    progress: Float,
+    onProgressChange: (Float) -> Unit,
+    sweepAngle: Float
+) = ArcSlider(progress, onProgressChange, Modifier)
 
+/**
+ * A circular slider that can be used to select a value between 0f and 1f.
+ */
 @Composable
 fun ArcSlider(
-    modifier: Modifier = Modifier,
+    progress: Float,
+    onProgressChange: (Float) -> Unit,
+    // TODO: This a workaround to differ between nonJs ArcSlider and Common (Web + Dektop + Android) ArcSlider
+    modifier: Modifier,
     width: Dp = 8.dp,
+    sweepAngle: Float = 270f
 ) = ArcSlider(
+    progress,
+    onProgressChange,
     Stroke(width = with(LocalDensity.current) { width.toPx() }, cap = StrokeCap.Round),
-    modifier
+    modifier,
+    sweepAngle,
 )
 
 @Composable
 fun ArcSlider(
+    progress: Float,
+    onProgressChange: (Float) -> Unit,
     style: Stroke,
-    modifier: Modifier = Modifier) {
+    modifier: Modifier = Modifier,
+    sweepAngle: Float = 270f
+) {
     var size by remember { mutableStateOf(Size.Zero) }
-    var progress by remember { mutableStateOf(0.1f) }
-    val sweepAngle = 270f
 
     Box(modifier, contentAlignment = Alignment.Center) {
-        Text(progress.toString())
-
         Arc(progress,
             Modifier
                 .aspectRatio(1f)
@@ -68,7 +73,7 @@ fun ArcSlider(
             style = style
         )
 
-        ArcHandle(progress, size, sweepAngle) { progress = calculateProgress(it, sweepAngle, size, progress) }
+        ArcHandle(progress, size, sweepAngle) { onProgressChange(calculateProgress(it, sweepAngle, size, progress)) }
     }
 }
 
@@ -85,15 +90,15 @@ private fun ArcHandle(progress: Float, size: Size, sweepAngle: Float, onDrag: (O
 
     Box(Modifier
         .offset { IntOffset(x.roundToInt(), y.roundToInt()) }
-        .size(radius * 2)
-        .background(MaterialTheme.colorScheme.primary, CircleShape)
         .pointerInput(size) {
             detectDragGestures { change, dragAmount ->
                 change.consumeAllChanges()
 
                 onDrag(dragAmount)
             }
-        })
+        }) {
+        Box(Modifier.size(radius * 2).background(MaterialTheme.colorScheme.primary, CircleShape))
+    }
 }
 
 private fun calculateProgress(drag: Offset, sweepAngle: Float, size: Size, progress: Float): Float {
@@ -130,7 +135,7 @@ internal fun Arc(
     backgroundColor: Color = MaterialTheme.colorScheme.primaryContainer,
     style: Stroke = Stroke(width = with(LocalDensity.current) { 8.dp.toPx() }, cap = StrokeCap.Round),
 ) {
-    // check(progress in 0f..1f) { "Progress should be between 0 and 1. Progress was $progress" }
+    check(progress in 0f..1f) { "Progress should be between 0 and 1. Progress was $progress" }
 
     Canvas(modifier) {
         drawArc(

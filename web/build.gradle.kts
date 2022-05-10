@@ -5,8 +5,8 @@ plugins {
     id("org.jetbrains.compose")
 }
 
-group "dev.antonius"
-version "1.0-SNAPSHOT"
+group = rootProject.group
+version = rootProject.version
 
 repositories {
     google()

@@ -6,8 +6,8 @@ plugins {
     id("com.android.library")
 }
 
-group = "dev.antonius"
-version = "1.0-SNAPSHOT"
+group = rootProject.group
+version = rootProject.version
 
 kotlin {
     android()

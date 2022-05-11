@@ -33,7 +33,7 @@ kotlin {
                 implementation(compose.web.core)
                 implementation(compose.runtime)
 
-                // TODO: Uncomment implementation(project(":common"))
+                implementation(project(":common"))
             }
         }
         val jsTest by getting {

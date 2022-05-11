@@ -30,8 +30,9 @@ import kotlin.math.*
 actual fun ArcSlider(
     progress: Float,
     onProgressChange: (Float) -> Unit,
-    sweepAngle: Float
-) = ArcSlider(progress, onProgressChange, Modifier)
+    sweepAngle: Float,
+    content: @Composable () -> Unit
+) = ArcSlider(progress, onProgressChange, Modifier, sweepAngle = sweepAngle, content = content)
 
 /**
  * A circular slider that can be used to select a value between 0f and 1f.
@@ -43,13 +44,19 @@ fun ArcSlider(
     // TODO: This a workaround to differ between nonJs ArcSlider and Common (Web + Dektop + Android) ArcSlider
     modifier: Modifier,
     width: Dp = 8.dp,
-    sweepAngle: Float = 270f
+    sweepAngle: Float = 270f,
+    color: Color = MaterialTheme.colorScheme.primary,
+    backgroundColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    content: @Composable () -> Unit = {},
 ) = ArcSlider(
     progress,
     onProgressChange,
     Stroke(width = with(LocalDensity.current) { width.toPx() }, cap = StrokeCap.Round),
     modifier,
     sweepAngle,
+    color,
+    backgroundColor,
+    content
 )
 
 @Composable
@@ -58,7 +65,10 @@ fun ArcSlider(
     onProgressChange: (Float) -> Unit,
     style: Stroke,
     modifier: Modifier = Modifier,
-    sweepAngle: Float = 270f
+    sweepAngle: Float = 270f,
+    color: Color = MaterialTheme.colorScheme.primary,
+    backgroundColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    content: @Composable () -> Unit = {},
 ) {
     var size by remember { mutableStateOf(Size.Zero) }
 
@@ -70,15 +80,19 @@ fun ArcSlider(
                 .padding(16.dp)
                 .onSizeChanged { size = it.toSize() },
             sweepAngle,
-            style = style
+            color,
+            backgroundColor,
+            style
         )
 
-        ArcHandle(progress, onProgressChange, size, sweepAngle)
+        ArcHandle(progress, onProgressChange, size, sweepAngle, color)
+
+        content()
     }
 }
 
 @Composable
-private fun ArcHandle(progress: Float, onProgressChange: (Float) -> Unit, size: Size, sweepAngle: Float) {
+private fun ArcHandle(progress: Float, onProgressChange: (Float) -> Unit, size: Size, sweepAngle: Float, color: Color = MaterialTheme.colorScheme.primary) {
     val handleRadius = 12.dp
 
     val angle = degToRad(90 + (360 - sweepAngle) / 2 + progress * sweepAngle)
@@ -117,7 +131,7 @@ private fun ArcHandle(progress: Float, onProgressChange: (Float) -> Unit, size: 
     )
 
     Box(Modifier.offset { IntOffset(x.roundToInt(), y.roundToInt()) }) {
-        Box(Modifier.size(handleRadius * 2).background(MaterialTheme.colorScheme.primary, CircleShape))
+        Box(Modifier.size(handleRadius * 2).background(color, CircleShape))
     }
 }
 

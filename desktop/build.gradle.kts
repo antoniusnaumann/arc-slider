@@ -11,7 +11,7 @@ version = rootProject.version
 
 
 kotlin {
-    jvm {
+    jvm() {
         compilations.all {
             kotlinOptions.jvmTarget = "11"
         }
@@ -22,6 +22,8 @@ kotlin {
             dependencies {
                 implementation(project(":common"))
                 implementation(compose.desktop.currentOs)
+
+                // TODO: uncomment implementation("dev.antonius:chords:0.1.3")
             }
         }
         val jvmTest by getting
@@ -31,10 +33,13 @@ kotlin {
 compose.desktop {
     application {
         mainClass = "MainKt"
+
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "arc-slider"
             packageVersion = "1.0.0"
+
+            jvmArgs("-Dapple.awt.application.appearance=system")
         }
     }
 }

@@ -4,10 +4,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import dev.antonius.common.example.ThermostatScreen
 
 @Composable
 fun App() {
-    DemoArcSlider()
+    ThermostatScreen()
 }
 
 @Composable
@@ -30,7 +31,4 @@ fun DemoArcSlider() {
 expect fun Button(onClick: () -> Unit, content: @Composable () -> Unit)
 
 @Composable
-expect fun Text(text: String)
-
-@Composable
-expect fun ArcSlider(progress: Float, onProgressChange: (Float) -> Unit, sweepAngle: Float = 270f)
+expect fun ArcSlider(progress: Float, onProgressChange: (Float) -> Unit, sweepAngle: Float = 270f, content: @Composable () -> Unit = {})

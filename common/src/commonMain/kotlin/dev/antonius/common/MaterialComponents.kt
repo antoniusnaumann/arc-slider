@@ -8,6 +8,3 @@ actual fun Button(
     onClick: () -> Unit,
     content: @Composable () -> Unit
 ) = androidx.compose.material3.Button(onClick) { content() }
-
-@Composable
-actual fun Text(text: String) = androidx.compose.material3.Text(text)

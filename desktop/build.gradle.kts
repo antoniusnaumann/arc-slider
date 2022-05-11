@@ -23,7 +23,7 @@ kotlin {
                 implementation(project(":common"))
                 implementation(compose.desktop.currentOs)
 
-                // TODO: uncomment implementation("dev.antonius:chords:0.1.3")
+               // implementation("dev.antonius:chords:0.1.4")
             }
         }
         val jvmTest by getting

@@ -3,11 +3,13 @@ package dev.antonius.common.example
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -57,17 +59,22 @@ fun ThermostatScreen() {
             color = color,
             backgroundColor = backgroundColor,
         ) {
+            Box(Modifier
+                .fillMaxHeight()
+                .aspectRatio(1f)
+                .padding(32.dp)
+                .background(Brush.radialGradient(listOf(backgroundColor, Color.Transparent)), CircleShape))
             Text(
                 uiState.display.run {
                     val first = split(".").first()
-                    val fraction = split(".").last()
+                    // val fraction = split(".").last()
 
                     AnnotatedString(first,
                         spanStyle = SpanStyle(fontWeight = FontWeight.Bold)
-                    ) + AnnotatedString(".$fraction",
-                        spanStyle = SpanStyle(fontWeight = FontWeight.Light)
+                    // ) + AnnotatedString(".$fraction",
+                      //  spanStyle = SpanStyle(fontWeight = FontWeight.Light)
                     ) + AnnotatedString(" ℃",
-                        spanStyle = SpanStyle(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), fontWeight = FontWeight.Light)
+                        spanStyle = SpanStyle(color = color.copy(alpha = 0.5f), fontWeight = FontWeight.Light)
                     )
                 },
                 style = MaterialTheme.typography.displayLarge,
@@ -91,7 +98,7 @@ fun interpolateColor(colors: List<Color>, progress: Float): Color {
 
 data class ThermostatScreenState(val min: Float, val max: Float, val temperature: Float) {
     val progress = (temperature - min) / (max - min)
-    val display = "${(temperature * 10f).roundToInt() / 10f}"
+    val display = "${temperature.roundToInt()}" //"${(temperature * 10f).roundToInt() / 10f}"
 
     fun update(progress: Float): ThermostatScreenState {
         check(progress in 0f..1f) { "Progress must be between 0 and 1" }

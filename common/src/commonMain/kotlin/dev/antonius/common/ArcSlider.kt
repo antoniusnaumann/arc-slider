@@ -73,13 +73,13 @@ fun ArcSlider(
             style = style
         )
 
-        ArcHandle(progress, size, sweepAngle) { onProgressChange(calculateProgress(it, sweepAngle, size, progress)) }
+        ArcHandle(progress, onProgressChange, size, sweepAngle)
     }
 }
 
 @Composable
-private fun ArcHandle(progress: Float, size: Size, sweepAngle: Float, onDrag: (Offset) -> Unit) {
-    val radius = 12.dp
+private fun ArcHandle(progress: Float, onProgressChange: (Float) -> Unit, size: Size, sweepAngle: Float) {
+    val handleRadius = 12.dp
 
     val angle = degToRad(90 + (360 - sweepAngle) / 2 + progress * sweepAngle)
 
@@ -88,31 +88,42 @@ private fun ArcHandle(progress: Float, size: Size, sweepAngle: Float, onDrag: (O
     val x = circleRadius * cos(angle)
     val y = circleRadius * sin(angle)
 
-    Box(Modifier
-        .offset { IntOffset(x.roundToInt(), y.roundToInt()) }
-        .pointerInput(size) {
-            detectDragGestures { change, dragAmount ->
-                change.consumeAllChanges()
+    var proxyOffsetX by remember { mutableStateOf(x) }
+    var proxyOffsetY by remember { mutableStateOf(y) }
 
-                onDrag(dragAmount)
-            }
-        }) {
-        Box(Modifier.size(radius * 2).background(MaterialTheme.colorScheme.primary, CircleShape))
+    var dragEnded by remember { mutableStateOf(0) }
+
+    LaunchedEffect(dragEnded, size) {
+        proxyOffsetX = x
+        proxyOffsetY = y
+    }
+
+    Box(Modifier
+        .offset { IntOffset(proxyOffsetX.roundToInt(), proxyOffsetY.roundToInt()) }
+        .size(handleRadius * 2)
+        .pointerInput(size, dragEnded) {
+            detectDragGestures(
+                onDragEnd = {
+                    dragEnded++
+                },
+                onDrag = { change, dragAmount ->
+                    change.consumeAllChanges()
+                    proxyOffsetX += dragAmount.x
+                    proxyOffsetY += dragAmount.y
+
+                    onProgressChange(calculateProgress(Offset(proxyOffsetX, proxyOffsetY), sweepAngle))
+                })
+        }
+    )
+
+    Box(Modifier.offset { IntOffset(x.roundToInt(), y.roundToInt()) }) {
+        Box(Modifier.size(handleRadius * 2).background(MaterialTheme.colorScheme.primary, CircleShape))
     }
 }
 
-private fun calculateProgress(drag: Offset, sweepAngle: Float, size: Size, progress: Float): Float {
-    val angle = degToRad(90 + (360 - sweepAngle) / 2 + progress * sweepAngle)
-    val circleRadius = size.width / 2
-
-    val x = circleRadius * cos(angle)
-    val y = circleRadius * sin(angle)
-
-    val rawX = x + drag.x
-    val rawY = y + drag.y
-
-    val theta = (radToDeg(atan2(rawY, rawX))).normalizedDegrees()
-
+private fun calculateProgress(drag: Offset, sweepAngle: Float): Float {
+    // TODO prevent jumps from 1f to 0f
+    val theta = (radToDeg(atan2(drag.y, drag.x))).normalizedDegrees()
     val rawProgress = (theta - 90 - (360 - sweepAngle) / 2 ).normalizedDegrees() / sweepAngle
 
     // The first is a hack to estimate if the progress did underflow

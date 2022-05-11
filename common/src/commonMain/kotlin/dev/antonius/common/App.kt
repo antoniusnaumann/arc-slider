@@ -12,7 +12,7 @@ fun App() {
 
 @Composable
 fun DemoArcSlider() {
-    var progress by remember { mutableStateOf(0.5f) }
+    var progress by remember { mutableStateOf(0.2f) }
 
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
         ArcSlider(
